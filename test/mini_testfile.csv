@@ -1,0 +1,28 @@
+Australian Bureau of Statistics
+
+"2016 Census - Counting Persons, Place of Enumeration (MB)"
+"SEXP Sex and FMGF - 1 Digit Level by STATE"
+"Counting: Persons Location on Census Night"
+
+Filters:
+"Default Summation","Persons Location on Census Night"
+
+,"STATE","New South Wales","Victoria","Queensland","South Australia","Western Australia","Tasmania","Northern Territory","Australian Capital Territory","Other Territories","Total",
+"SEXP Sex","FMGF - 1 Digit Level",
+"Male","Couple family with grandchildren",20710,12307,14166,4066,7151,1435,1926,702,10,62463,
+,"Lone grandparent",10617,6127,6351,2085,3369,671,1486,302,13,31019,
+,"Not applicable",3692904,2892405,2362975,817562,1250871,244515,132578,196526,2853,11593188,
+"Female","Couple family with grandchildren",19712,11688,13790,3723,7000,1364,1820,723,10,59827,
+,"Lone grandparent",15730,9441,9534,3135,5042,961,1827,462,13,46152,
+,"Not applicable",3805273,3014087,2437722,844224,1244420,255233,119476,201935,2410,11924766,
+"Total","Couple family with grandchildren",40422,23999,27950,7780,14154,2793,3742,1423,21,122290,
+,"Lone grandparent",26351,15572,15892,5219,8409,1629,3317,761,27,77165,
+,"Not applicable",7498170,5906487,4800703,1661786,2495294,499744,252053,398458,5265,23517955,
+
+"Data Source: Census of Population and Housing, 2016, TableBuilder"
+
+"INFO","Cells in this table have been randomly adjusted to avoid the release of confidential data. No reliance should be placed on small cells."
+
+
+"Copyright Commonwealth of Australia, 2018, see abs.gov.au/copyright"
+"ABS data licensed under Creative Commons, see abs.gov.au/ccby"
