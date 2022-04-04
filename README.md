@@ -1,7 +1,8 @@
 # Table Builder IO
  
-This tool provides a standard way to read/ clean data extracted from ABS TableBuilder table builder. It serves to 
-avoid/ replace bespoke ways of preparing table builder data e.g.
+`table_builder_io` defines a minimal API for reading CSVs downloaded from ABS TableBuilder without manual editing of the raw data.
+
+It serves to avoid/ replace bespoke ways of preparing table builder data e.g.
 - Cleaning the header and footer data manually
 - Trying to be clever with magic arguments to pandas read_csv skipheader and skipfooter that may or may not need to be 
   adjusted every time
@@ -9,17 +10,30 @@ avoid/ replace bespoke ways of preparing table builder data e.g.
   wafers and resort to manually cleaning CSVs
 - Hacky flattening of row level index labels and column labels into a single set of column headers that definitely 
   works every time
-  
-`table_builder_io` defines a minimal API for reading CSVs downloaded from ABS TableBuilder without manual editing of the raw data.
 
 ## Installation
-placeholder
+The recommendation is to install `table_builder_io` with pip,
+```
+python -m pip install table_builder_io
+```
+
 
 ### Dependencies
-Besides python itself, the only dependency for `table_builder_io` is `pandas`. It has been tested on 1.3.x but does not
-  use any special functionality, so will likely work on any release >=1.0.0. Hope to test this more explicitly in future.
+Besides python itself, the only dependency for `table_builder_io` is `pandas`. It has been tested on pandas 1.1.x but 
+does not use any special functionality, so may work on older versions as well. The light requirements mean that pip 
+installing into a conda environment after pandas has already been installed should be relatively safe.
 
-`table_builder_io` requires python >=3.6 as it uses f-strings and standard library type hints. It has been explicitly tested on Python 3.8
+### Developer install
+To install for local development in your virtual environemnt tool of choice, active the environment then,
+
+```bash
+git clone git@github.com:vlc/table_builder_io.git
+cd table_builder_io
+python -m pip install -e .
+```
+
+`table_builder_io` requires python >=3.6 as it uses f-strings and standard library type hints. It has been 
+explicitly tested on Python 3.6, 3.8 and 3.10.
 
 ## Example
 
@@ -81,7 +95,10 @@ Out[6]:
 3   Female  Couple family with grandchildren            19712     11688       13790             3723
 4   Female                  Lone grandparent            15730      9441        9534             3135
 ```
-**For more examples, see [examples.ipynb](examples.ipynb)**
+
+[comment]: <> (**For more examples, see [examples.ipynb]&#40;examples.ipynb&#41;**)
+[comment]: <> (absolute link so this works on pypi)
+**For more examples, see [Examples on Github](https://github.com/vlc/table_builder_io)**
 
 ## Supported Formats
 Currently *should* support
