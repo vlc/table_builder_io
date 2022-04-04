@@ -12,14 +12,25 @@ It serves to avoid/ replace bespoke ways of preparing table builder data e.g.
   works every time
 
 ## Installation
-The recommendation is to install `table_builder_io` with pip, directly from pypi.
-`pip install table_builder_io`
+The recommendation is to install `table_builder_io` with pip,
+```
+python -m pip install table_builder_io
+```
 
 
 ### Dependencies
-Besides python itself, the only dependency for `table_builder_io` is `pandas`. It has been tested on 1.1.x but does not
-  use any special functionality, so may work on older versions as well. The light requirements mean that pip 
+Besides python itself, the only dependency for `table_builder_io` is `pandas`. It has been tested on pandas 1.1.x but 
+does not use any special functionality, so may work on older versions as well. The light requirements mean that pip 
 installing into a conda environment after pandas has already been installed should be relatively safe.
+
+### Developer install
+To install for local development in your virtual environemnt tool of choice, active the environment then,
+
+```bash
+git clone git@github.com:vlc/table_builder_io.git
+cd table_builder_io
+python -m pip install -e .
+```
 
 `table_builder_io` requires python >=3.6 as it uses f-strings and standard library type hints. It has been 
 explicitly tested on Python 3.6, 3.8 and 3.10.
