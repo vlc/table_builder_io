@@ -109,9 +109,10 @@ def _extract_footer(contents: List[str], footer_maxlines: int, pattern: Union[Pa
         raise ValueError("'contents' should be newline delimited list")
 
     footer_region = "".join(contents[-footer_maxlines:])
+    print(footer_region, "aaa")
     m = re.search(pattern, footer_region)
     if m is None:
-        raise ValueError(f"No match could be found in header text:\n{footer_region}\n pattern is:\n{pattern}")
+        raise ValueError(f"No match could be found in footer text:\n{footer_region}\n pattern is:\n{pattern}")
 
     start_index_as_negative_from_end = m.start() - m.end()
     footer = footer_region[m.start() : m.end()].strip("\n")

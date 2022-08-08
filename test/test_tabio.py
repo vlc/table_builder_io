@@ -26,6 +26,8 @@ def extract_format(string):
 TESTS = [MULTILEVEL_ROWS_TEST_DATA, MULTILEVEL_ROWS2_TEST_DATA, SPATIAL_X_ATTR1_TEST_DATA,
          OD_DATA1_TEST_DATA, COL_MULTIINDEX_DATA_TEST_DATA]
 
+TEST_DATA_PATH = Path(__file__).parent
+
 
 class TestMetadataSplitting(unittest.TestCase):
     def test_header_extraction(self):
@@ -110,7 +112,7 @@ class SpecificCaseChecks(unittest.TestCase):
         # only test the wafer splitting, because the processing of the individual wafers is the same
         # Probably could add this if I had a smaller test case.
 
-        path = Path(__file__).parent / "sa2_pow_vs_sa2_ur_bne_bc_worker_total_wafer.csv"
+        path = TEST_DATA_PATH / "sa2_pow_vs_sa2_ur_bne_bc_worker_total_wafer.csv"
         reader = TableBuilderReader.from_file(path)
         actual_dict = reader.read(as_index=True)
         expected_wafers = {"Technicians and Trades Workers", "Machinery Operators and Drivers", "Labourers", "Total"}
@@ -122,6 +124,12 @@ class SpecificCaseChecks(unittest.TestCase):
     def test_header_ffilling(self):
         # Test that ffill correctly densely populates the ragged multiindices
         # (in the truncated tests above there isn't enough information for the ffill to be completely correct)
-        path = Path(__file__).parent / "mini_testfile.csv"
+        path = TEST_DATA_PATH / "mini_testfile.csv"
+        reader = TableBuilderReader.from_file(path)
+        assert_frame_equal(reader.read(as_index=True), MUTTILEVEL_RAGGED_FFILL_TEST)
+
+    def test_dataset_footer_variant(self):
+        # Foot has changed (2021 update?)
+        path = TEST_DATA_PATH / "mini_testfile_dataset_footer_variant.csv"
         reader = TableBuilderReader.from_file(path)
         assert_frame_equal(reader.read(as_index=True), MUTTILEVEL_RAGGED_FFILL_TEST)
