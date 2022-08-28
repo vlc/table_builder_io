@@ -1,7 +1,6 @@
 [build-system]
 requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
-# Build instructions: https://flit.pypa.io/en/latest/ (update __version__ and flit publish
 
 [project]
 name = "table_builder_io"
