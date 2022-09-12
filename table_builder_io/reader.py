@@ -1,11 +1,12 @@
 import re
 from dataclasses import dataclass
 from io import StringIO
+from pathlib import Path
+from typing import Tuple, List, IO, Dict, Union, Pattern
+from typing_extensions import Self
 from warnings import warn
 
 import pandas as pd
-from pathlib import Path
-from typing import Tuple, List, IO, Dict, Union, Pattern
 
 from table_builder_io.regexes import (
     ABS_HEADER_METADATA_PATTERN,
@@ -17,7 +18,8 @@ from table_builder_io.regexes import (
 
 
 class TableBuilderReader:
-    HEADER_FOOTER_MAX_EXTENT = 20
+    """Manages reading and parsing raw CSV data from table builder. """
+    HEADER_FOOTER_MAX_EXTENT = 20  # maximum candidate size of header / footer, used to limit the search space
     HEADER_PATTERN = re.compile(ABS_HEADER_METADATA_PATTERN)
     FOOTER_PATTERN = re.compile(ABS_FOOTER_METADATA_PATTERN)
 
@@ -25,28 +27,28 @@ class TableBuilderReader:
         self.lines = line_list
 
     @classmethod
-    def from_file(cls, path: Union[Path, str]):
+    def from_file(cls, path: Union[Path, str]) -> Self:
         """Create a TableBuilderReader from file"""
         with open(path, "r") as f:
             contents = f.readlines()
         return cls(contents)
 
     @classmethod
-    def from_file_handler(cls, fh: IO[str]):
+    def from_file_handler(cls, fh: IO[str]) -> Self:
         """Create a TableBuilderReader from an open file handler ( e.g. from f in `with open(fpath, 'r') as f:`)"""
         return cls(fh.readlines())
 
     @classmethod
-    def from_string(cls, string: str):
+    def from_string(cls, string: str) -> Self:
         """Create a TableBuilderReader from a string containing a TableBuilder CSV as its contents"""
         # expect everything to end with a newline, consistent with readlines
         # Note this is marginally quicker than io.StringIO(string).readlines()
         return cls([i + "\n" for i in string.strip("\n").split("\n")])
 
-    def _extract_header(self):
+    def _extract_header(self) -> Tuple[str, int]:
         return _extract_header(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.HEADER_PATTERN)
 
-    def _extract_footer(self):
+    def _extract_footer(self) -> Tuple[str, int]:
         return _extract_footer(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.FOOTER_PATTERN)
 
     def split_metadata(self) -> Tuple[str, str, str]:
@@ -68,8 +70,8 @@ class TableBuilderReader:
         """
         header, body, footer = self.split_metadata()
         # TODO return the header metadata in a useful way?
-        # First split is between text before wafer (nothing because it's in the header) and the first wafer
-        # so we drop it
+        # First split is between text before wafer (which is empty, because any text before that's non-empty
+        # constitutes the header). So drop the first split
         wafer_title_body_list = WAFER_ROW.split(body)[1:]
 
         if len(wafer_title_body_list) == 0:  # No wafers, single body
@@ -90,7 +92,7 @@ class TableBuilderReader:
             return out
 
 
-def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pattern, str]):
+def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pattern, str]) -> Tuple[str, int]:
     if not isinstance(contents, List):
         raise ValueError("'contents' should be newline delimited list")
 
@@ -99,12 +101,12 @@ def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pa
     if m is None:
         raise ValueError(f"No match could be found in header text:\n{header_region}\n pattern is:\n{pattern}")
 
-    header = header_region[m.start() : m.end()].strip("\n")
+    header = header_region[m.start(): m.end()].strip("\n")
     body_start_index = m.end()
     return header, body_start_index
 
 
-def _extract_footer(contents: List[str], footer_maxlines: int, pattern: Union[Pattern, str]):
+def _extract_footer(contents: List[str], footer_maxlines: int, pattern: Union[Pattern, str]) -> Tuple[str, int]:
     if not isinstance(contents, List):
         raise ValueError("'contents' should be newline delimited list")
 
@@ -114,7 +116,7 @@ def _extract_footer(contents: List[str], footer_maxlines: int, pattern: Union[Pa
         raise ValueError(f"No match could be found in footer text:\n{footer_region}\n pattern is:\n{pattern}")
 
     start_index_as_negative_from_end = m.start() - m.end()
-    footer = footer_region[m.start() : m.end()].strip("\n")
+    footer = footer_region[m.start(): m.end()].strip("\n")
     body_end_index = start_index_as_negative_from_end
     return footer, body_end_index
 
@@ -154,9 +156,12 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
     num_row_index_columns = num_blank_cols_preceding_col_headers + 1
 
     col_dimensions = []
-    column_headers_map: Dict[str : pd.Series] = {}
+    column_headers_map: Dict[str: pd.Series] = {}
     # Find all the columns (multi)index and work out where the rows index starts
     num_entries_in_line_old = None
+
+    hit_break = False
+
     for n, line in enumerate(lines):
         # this ignores the preceding commas before columns / above index (they're not quote wrapped)
         row_items = RE_QUOTE_WRAPPED_CSV_SPLITTER_AND_CS.findall(line)
@@ -175,10 +180,15 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
 
             num_entries_in_line_old = num_entries_in_line
         else:
+            # This case will always be hit eventually
             row_index_header_row = line  # == lines[n]
+            hit_break = True
             break
     # rest of table  - the data beyond the headers
-    rest = lines[n + 1 :]
+    if not hit_break:
+        raise ValueError("Malformed file, never detected the end of index headers")
+
+    rest = lines[n + 1:]
 
     rows_header_list = RE_QUOTE_WRAPPED_CSV_SPLITTER.findall(row_index_header_row)
     num_col_index_cols = len(column_headers_map[col_dimensions[-1]])  # ncols in csv with data, not labels in them
@@ -194,11 +204,11 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
 
 class TableBuilderResult:
     def __init__(
-        self,
-        df: pd.DataFrame,
-        index_headers: List[str],
-        column_headers: Dict[str, List[str]],
-        column_dimensions: List[str],
+            self,
+            df: pd.DataFrame,
+            index_headers: List[str],
+            column_headers: Dict[str, List[str]],
+            column_dimensions: List[str],
     ):
         self._df = df
         self.index_headers = index_headers
