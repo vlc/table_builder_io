@@ -61,7 +61,7 @@ class TestMetadataSplitting(unittest.TestCase):
                 # A little hacky, but makes test cases easier to write
                 if isinstance(col_headers, pd.MultiIndex):
                     col_headers = ['_'.join(col).strip() for col in col_headers]
-                self.assertEqual(col_headers, test_case.col_headers)
+                self.assertEqual(col_headers, expected_cols)
                 self.assertEqual(res.column_dimensions, test_case.column_dimensions)
 
     def test_index_extraction(self):

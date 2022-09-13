@@ -43,7 +43,7 @@ class TableBuilderReader:
         """Create a TableBuilderReader from a string containing a TableBuilder CSV as its contents"""
         # expect everything to end with a newline, consistent with readlines
         # Note this is marginally quicker than io.StringIO(string).readlines()
-        return cls([i + "\n" for i in string.strip("\n").split("\n")])
+        return cls([i + "\n" for i in string.strip("\n").splitlines()])
 
     def _extract_header(self) -> Tuple[str, int]:
         return _extract_header(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.HEADER_PATTERN)
@@ -145,6 +145,10 @@ def _at_index_headers(line: str, line_no: int, num_entries_in_line, num_entries_
 
 
 def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
+    """Parse the column headers of a data section of the Table Builder file.
+
+    Note this is not parsing the metadata header at the start of the entire file.
+    """
     # pull the (multiindex) column headers off the data
     # Do this by detecting the first index row (which must end with blank cells underneath the column headers)
 

@@ -15,6 +15,7 @@ requires-python = ">=3.6"
 dynamic = ["version", "description"]
 dependencies = [
     "pandas >=1.0",
+    "typing_extensions",
     "dataclasses; python_version == '3.6'",
 ]
 
