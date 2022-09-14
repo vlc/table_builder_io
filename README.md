@@ -74,7 +74,7 @@ Filters:
 ```python
 In[1]: from table_builder_io import TableBuilderReader
 In[2]: reader = TableBuilderReader.from_file("test/mini_testfile.csv")
-In[3]: df = reader.read(as_index=True)
+In[3]: df = reader.read_table(as_index=True)
 In[4]: df.iloc[:, :4].head()
 OOut[4]:
 STATE                                      New South Wales  Victoria  Queensland  South Australia

@@ -2,12 +2,13 @@ import re
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-from typing import Tuple, List, IO, Dict, Union, Pattern
-from typing_extensions import Self
+from typing import Tuple, List, IO, Dict, Union, Pattern, Optional
 from warnings import warn
 
 import pandas as pd
+from typing_extensions import Self
 
+from table_builder_io.parse_metadata import HeaderInfo
 from table_builder_io.regexes import (
     ABS_HEADER_METADATA_PATTERN,
     ABS_FOOTER_METADATA_PATTERN,
@@ -25,6 +26,12 @@ class TableBuilderReader:
 
     def __init__(self, line_list: List[str]):
         self.lines = line_list
+
+        # private methods to store partitioned data, dealing with less than optimal api choices.
+        # This is due to these being retrieved as a group of three, but only consumed individually
+        self._raw_header: Optional[str] = None
+        self._raw_body: Optional[str] = None
+        self._raw_footer: Optional[str] = None
 
     @classmethod
     def from_file(cls, path: Union[Path, str]) -> Self:
@@ -45,21 +52,28 @@ class TableBuilderReader:
         # Note this is marginally quicker than io.StringIO(string).readlines()
         return cls([i + "\n" for i in string.strip("\n").splitlines()])
 
-    def _extract_header(self) -> Tuple[str, int]:
-        return _extract_header(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.HEADER_PATTERN)
+    @property
+    def raw_header(self) -> str:
+        """Retrieve the raw metadata header. Deliberately read only."""
+        if self._raw_header is None:
+            self._raw_header, self._raw_body, self._raw_footer = self.split_metadata()
+        return self._raw_header
 
-    def _extract_footer(self) -> Tuple[str, int]:
-        return _extract_footer(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.FOOTER_PATTERN)
+    @property
+    def raw_body(self) -> str:
+        """Retrieve the plaintext "body" of the tablebuilder "document" i.e. the table part. Deliberately read only."""
+        if self._raw_header is None:
+            self._raw_header, self._raw_body, self._raw_footer = self.split_metadata()
+        return self._raw_body
 
-    def split_metadata(self) -> Tuple[str, str, str]:
-        header, body_start_idx = self._extract_header()
-        footer, body_end_idx = self._extract_footer()
+    @property
+    def raw_footer(self) -> str:
+        """Retrieve the raw metadata footer. Deliberately read only."""
+        if self._raw_header is None:
+            self._raw_header, self._raw_body, self._raw_footer = self.split_metadata()
+        return self._raw_footer
 
-        body = "".join(self.lines)[body_start_idx:body_end_idx].strip("\n")
-
-        return header, body, footer
-
-    def read(self, as_index=True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    def read_table(self, as_index=True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """Read the Table builder file to a DataFrame.
 
         as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
@@ -68,8 +82,7 @@ class TableBuilderReader:
             depending on how it is being used.
 
         """
-        header, body, footer = self.split_metadata()
-        # TODO return the header metadata in a useful way?
+        body = self.raw_body
         # First split is between text before wafer (which is empty, because any text before that's non-empty
         # constitutes the header). So drop the first split
         wafer_title_body_list = WAFER_ROW.split(body)[1:]
@@ -90,6 +103,38 @@ class TableBuilderReader:
                 out[title] = df
 
             return out
+
+    def read_header_metadata(self) -> HeaderInfo:
+        return HeaderInfo.from_raw_text(self.raw_header)
+
+    # Can't see a good use for this, could provide as plaintext but that would be inconsistent with above
+    # would rather not give an API than get the API wrong. Also, raw_footer exists to give the raw footer
+    # def read_footer_metdata(self):
+
+    def read(self, as_index=True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+        """Read the Table builder file to a DataFrame. Original API name for `read_table`. read_table is preferred.
+
+        as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
+            This mimics the actual layout in the CSV.
+        as_index=False will return the data as a flat single level column index, which may be more convenient
+            depending on how it is being used.
+
+        """
+        return self.read_table(as_index=as_index)
+
+    def split_metadata(self) -> Tuple[str, str, str]:
+        header, body_start_idx = self._extract_header()
+        footer, body_end_idx = self._extract_footer()
+
+        body = "".join(self.lines)[body_start_idx:body_end_idx].strip("\n")
+
+        return header, body, footer
+
+    def _extract_header(self) -> Tuple[str, int]:
+        return _extract_header(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.HEADER_PATTERN)
+
+    def _extract_footer(self) -> Tuple[str, int]:
+        return _extract_footer(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.FOOTER_PATTERN)
 
 
 def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pattern, str]) -> Tuple[str, int]:

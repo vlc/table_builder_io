@@ -4,7 +4,7 @@ from typing_extensions import Self
 
 
 @dataclass
-class HeaderItems:
+class HeaderInfo:
     """Important pieces of information that can be extracted from header metadata
     Args:
         authority: str always Australian Bureau of Statistics
@@ -23,22 +23,19 @@ class HeaderItems:
     filters: str
     summation: str
 
-
     @classmethod
-    def from_raw_text(cls, text:str)->Self:
+    def from_raw_text(cls, text: str) -> Self:
         # This is relying on the regex header match ABS_HEADER_METADATA_PATTERN for structure
         split_text = text.strip().splitlines()
         # TODO filters will break when implemented
         parts = {}
-        parts['authority'],_, parts["dataset"], parts["variables"], parts["counting"], _, parts["filters"], parts["summation"] = split_text
-        parts = {k:v.strip('"') for k,v in parts.items()}
+        parts['authority'], _, parts["dataset"], parts["variables"], parts["counting"], _, parts["filters"], parts[
+            "summation"] = split_text
+        parts = {k: v.strip('"') for k, v in parts.items()}
         parts['counting'] = parts['counting'].split("Counting: ")[-1]
         parts['filters'] = parts['filters'].split("Filters:")[-1].strip()
         # could do all these checks with replace, but want them to be brittle so stuff breaks in an obvious way
         parts['summation'] = parts['summation'].replace("Default Summation", "").replace('","', "")
         print(parts)
-        return cls(parts['authority'], parts["dataset"], parts["variables"], parts["counting"], parts["filters"], parts["summation"])
-
-
-
-
+        return cls(parts['authority'], parts["dataset"], parts["variables"], parts["counting"], parts["filters"],
+                   parts["summation"])
