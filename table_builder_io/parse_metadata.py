@@ -36,6 +36,5 @@ class HeaderInfo:
         parts['filters'] = parts['filters'].split("Filters:")[-1].strip()
         # could do all these checks with replace, but want them to be brittle so stuff breaks in an obvious way
         parts['summation'] = parts['summation'].replace("Default Summation", "").replace('","', "")
-        print(parts)
         return cls(parts['authority'], parts["dataset"], parts["variables"], parts["counting"], parts["filters"],
                    parts["summation"])

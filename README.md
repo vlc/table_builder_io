@@ -76,7 +76,7 @@ In[1]: from table_builder_io import TableBuilderReader
 In[2]: reader = TableBuilderReader.from_file("test/mini_testfile.csv")
 In[3]: df = reader.read_table(as_index=True)
 In[4]: df.iloc[:, :4].head()
-OOut[4]:
+Out[4]:
 STATE                                      New South Wales  Victoria  Queensland  South Australia
 SEXP Sex FMGF - 1 Digit Level
 Male     Couple family with grandchildren            20710     12307       14166             4066
@@ -94,11 +94,19 @@ Out[6]:
 2     Male                    Not applicable          3692904   2892405     2362975           817562
 3   Female  Couple family with grandchildren            19712     11688       13790             3723
 4   Female                  Lone grandparent            15730      9441        9534             3135
+Int[7]: reader.read_header_metadata() 
+Out[7]:
+HeaderInfo(authority='Australian Bureau of Statistics',
+           dataset='2016 Census - Counting Persons, Place of Enumeration (MB)',
+           variables='SEXP Sex and FMGF - 1 Digit Level by STATE',
+           counting='Persons Location on Census Night',
+           filters='',
+           summation='Persons Location on Census Night')
 ```
 
 [comment]: <> (**For more examples, see [examples.ipynb]&#40;examples.ipynb&#41;**)
 [comment]: <> (absolute link so this works on pypi)
-**For more examples, see [Examples on Github](https://github.com/vlc/table_builder_io)**
+**For more examples, see [Examples on Github](https://github.com/vlc/table_builder_io/examples.ipynb)**
 
 ## Supported Formats
 Currently *should* support
@@ -110,6 +118,7 @@ Currently *should* support
   
 
 ## In theory easy to add
+- Support for datasets with filters
 - support for NVS TableBuilder headers/  footers
 - extraction of header/ footer metadata in a retrievable way
 - Standard utils after loading the table into memory
@@ -124,7 +133,8 @@ Currently *should* support
 
 
 ## Acknowledgements
-- My colleague @edavisau for articulating that the skipfooter/ skipheader way of reading Table Builder data sucks. And 
+- My colleague @edavisau for articulating that the skipfooter/ skipheader way of reading Table Builder data is 
+  error prone, less than optimal and
 for pointing out that in R, people already have nice things for reading Table Builder data.
 - Prior Art (have not investigated the implementation of either):
   - https://github.com/asiripanich/abs
