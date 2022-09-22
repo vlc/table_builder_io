@@ -44,7 +44,7 @@ ABS_HEADER_METADATA_PATTERN = (
     + with_prefix('"Counting:', ANY_LINE)
     + BLANK_LINE
     + specific_line("Filters:")
-    + f"(?:{ANY_LINE})+"  # there is a least one line after filters (default summation) + any actual filters
+    + ANY_LINE  # there is a least one line after filters (default summation) + any actual filters
     + BLANK_LINE
 )
 
