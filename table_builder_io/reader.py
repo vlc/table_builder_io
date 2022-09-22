@@ -163,7 +163,7 @@ def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pa
     if m is None:
         raise ValueError(f"No match could be found in header text:\n{header_region}\n pattern is:\n{pattern}")
 
-    header = header_region[m.start(): m.end()].strip("\n")
+    header = header_region[m.start(): m.end()].strip("\n")+"\n"
     body_start_index = m.end()
     return header, body_start_index
 

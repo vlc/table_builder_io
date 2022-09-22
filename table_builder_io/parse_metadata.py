@@ -1,6 +1,9 @@
+import re
 from dataclasses import dataclass
 
 from typing_extensions import Self
+
+from table_builder_io.regexes import ABS_HEADER_METADATA_PATTERN_WITH_CAPTURE_GROUPS, DOUBLE_QUOTE_WRAPPED_THING
 
 
 @dataclass
@@ -26,15 +29,26 @@ class HeaderInfo:
     @classmethod
     def from_raw_text(cls, text: str) -> Self:
         # This is relying on the regex header match ABS_HEADER_METADATA_PATTERN for structure
-        split_text = text.strip().splitlines()
-        # TODO filters will break when implemented
-        parts = {}
-        parts['authority'], _, parts["dataset"], parts["variables"], parts["counting"], _, parts["filters"], parts[
-            "summation"] = split_text
-        parts = {k: v.strip('"') for k, v in parts.items()}
-        parts['counting'] = parts['counting'].split("Counting: ")[-1]
-        parts['filters'] = parts['filters'].split("Filters:")[-1].strip()
-        # could do all these checks with replace, but want them to be brittle so stuff breaks in an obvious way
-        parts['summation'] = parts['summation'].replace("Default Summation", "").replace('","', "")
+        m = re.match(ABS_HEADER_METADATA_PATTERN_WITH_CAPTURE_GROUPS, text)
+        parts = m.groupdict()
+        # parts = {
+        #     "authority":m.group("authority"),
+        #     "dataset":m.group("dataset"),
+        #     "variables":m.group("variables"),
+        #     "counting": m.group("counting"),
+        # }
+        default_summation_raw, *filters_raw = m.group("filters").splitlines(keepends=False)
+        default_summation = DOUBLE_QUOTE_WRAPPED_THING.findall(default_summation_raw)[1]
+        parts['summation'] = default_summation
+
+        filters_clean = []
+        if filters_raw != [""]:  # check there are filters
+            for f in filters_raw:
+                if f == "":
+                    continue
+                name, value = DOUBLE_QUOTE_WRAPPED_THING.findall(f)
+                filters_clean.append(f"{name}=={value}")
+        parts['filters'] = filters_clean
+
         return cls(parts['authority'], parts["dataset"], parts["variables"], parts["counting"], parts["filters"],
                    parts["summation"])

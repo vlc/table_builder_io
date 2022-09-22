@@ -278,6 +278,55 @@ COL_MULTIINDEX_DATA_TEST_DATA = TestData(COL_MULTIINDEX_DATA_HEADER, COL_MULTIIN
                                      COL_MULTIINDEX_DATA_ROW_HEADERS, COL_MULTIINDEX_DATA_COL_HEADERS,
                                          COL_MULTIINDEX_DATA_DIMENSION, COL_MULTIINDEX_DATA_INDEX)
 
+
+FILTERS_2021_DATA_HEADER = """Australian Bureau of Statistics
+
+"2021 Census - counting persons, place of usual residence"
+"SAL (UR) by INGP Indigenous Status by STATE (UR) and AGE10P Age in Ten Year Groups"
+"Counting: Person Records"
+
+Filters:
+"Default Summation","Person Records"
+"STATE (UR)","Queensland"
+"AGE10P Age in Ten Year Groups","40-49 years"
+
+"""
+FILTERS_2021_DATA_BODY ="""
+"INGP Indigenous Status","Non-Indigenous","Aboriginal","Torres Strait Islander","Both Aboriginal and Torres Strait Islander","Not stated","Total",
+"SAL (UR)",
+"Aarons Pass",0,0,0,0,0,0,
+"Abbotsbury",0,0,0,0,0,0,
+"Jervis Bay",0,0,0,0,0,0,
+"Norfolk Island",0,0,0,0,0,0,
+"West Island",0,0,0,0,0,0,
+"No usual address (OT)",0,0,0,0,0,0,
+"Migratory - Offshore - Shipping (OT)",0,0,0,0,0,0,
+"Total",609581,19782,2470,1781,37376,670983,
+"""
+FILTERS_2021_DATA_FOOTER="""
+
+"Dataset: Census of Population and Housing, 2021, TableBuilder"
+
+"INFO","Cells in this table have been randomly adjusted to avoid the release of confidential data. No reliance should be placed on small cells."
+
+
+"Copyright Commonwealth of Australia, 2021, see abs.gov.au/copyright"
+"ABS data licensed under Creative Commons, see abs.gov.au/ccby"
+
+"""
+FILTERS_2021_DATA = FILTERS_2021_DATA_HEADER+ FILTERS_2021_DATA_BODY+FILTERS_2021_DATA_FOOTER
+FILTERS_2021_DATA_ROW_HEADERS = ['SAL (UR)']
+FILTERS_2021_DATA_COL_HEADERS = ["Non-Indigenous","Aboriginal","Torres Strait Islander","Both Aboriginal and Torres Strait Islander","Not stated","Total"]
+FILTERS_2021_DATA_DIMENSION = ["INGP Indigenous Status"]
+FILTERS_2021_DATA_INDEX = pd.DataFrame(
+    {'SAL (UR)': ["Non-Indigenous","Aboriginal","Torres Strait Islander","Both Aboriginal and Torres Strait Islander","Not stated","Total"]}
+)
+
+FILTERS_2021_DATA_TEST_DATA = TestData(FILTERS_2021_DATA_HEADER, FILTERS_2021_DATA_BODY, FILTERS_2021_DATA_FOOTER,
+                                     FILTERS_2021_DATA_ROW_HEADERS, FILTERS_2021_DATA_COL_HEADERS,
+                                     FILTERS_2021_DATA_DIMENSION, FILTERS_2021_DATA_INDEX)
+
+
 cols = ['ENGP Proficiency in Spoken English',
        'HSCP Highest Year of School Completed', 'Central Coast_Male',
        'Central Coast_Female', 'Sydney - Baulkham Hills and Hawkesbury_Male',
