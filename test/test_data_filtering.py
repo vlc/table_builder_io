@@ -4,6 +4,7 @@ from pandas.api.types import is_integer_dtype
 
 
 def test_total_stripping():
+    # TODO check totals with multiindex rows
     raw_data = DATASET_WITH_INT_ROWS_AND_TOTALS
     reader = TableBuilderReader.from_string(raw_data)
     df = reader.read_table(as_index=True)
@@ -24,7 +25,6 @@ def test_index_dtype_casting():
     raw_data = DATASET_WITH_INT_ROWS_AND_TOTALS
     reader = TableBuilderReader.from_string(raw_data)
     df = reader.read_table(as_index=True)
-    assert df.index.dtype=="object"
+    assert df.index.dtype == "object"
     df = reader.read_table(as_index=True, drop_totals="rows")
-    assert is_integer_dtype(df.index)
-
+    assert is_integer_dtype(df.index.dtype)

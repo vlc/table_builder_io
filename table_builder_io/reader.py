@@ -92,9 +92,7 @@ class TableBuilderReader:
         wafer_title_body_list = WAFER_ROW.split(body)[1:]
 
         if len(wafer_title_body_list) == 0:  # No wafers, single body
-            out = _parse_main_table(body).get_df(as_index=as_index)
-            if drop_totals is not None:
-                out = self.drop_totals(out, which=drop_totals)
+            out = _parse_main_table(body).get_df(as_index=as_index, drop_totals=drop_totals)
         elif (len(wafer_title_body_list) % 2) != 0: # Should have same number of wafer headers as bodies
             raise ValueError("Malformatted or failure, more wafer titles than bodies")
         else:
@@ -104,15 +102,18 @@ class TableBuilderReader:
 
             out = {}
             for title, wafer_body in zip(titles, bodies):
-                df = _parse_main_table(wafer_body.strip("\n")).get_df(as_index=as_index)
-                if drop_totals is not None:
-                    df = self.drop_totals(df, which=drop_totals)
+                df = _parse_main_table(wafer_body.strip("\n")).get_df(as_index=as_index,drop_totals=drop_totals)
                 out[title] = df
 
         return out
 
     @staticmethod
-    def drop_totals(df:pd.DataFrame, which:Literal["rows", "columns", "both"])->pd.DataFrame:
+    def drop_totals(df: pd.DataFrame, which: Literal["rows", "columns", "both"]) -> pd.DataFrame:
+        """Convenience method to drop total rows/ columns from dataframe if they are unused in analysis.
+
+        Note this is not used in the internal implementation so that int dtype promotion checking can happen after
+        drops occur.
+        """
         return df.drop(
             index=None if which =="columns" else "Total",
             columns=None if which =="rows" else "Total",
@@ -287,15 +288,26 @@ class TableBuilderResult:
         else:
             return self._column_headers[self.column_dimensions[0]]
 
-    def get_df(self, as_index: bool = True) -> pd.DataFrame:
+    def get_df(self,
+               as_index: bool = True,
+               *,
+               drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+               ) -> pd.DataFrame:
         col_headers = self.get_column_headers()
         index_headers = self.index_headers
         out = self._df.copy()
         if as_index:
             out = out.set_index(index_headers)
+            if drop_totals in ("rows", "both"):
+                out = out.drop(index="Total")
+            try:
+                # int32 is probably safe, largest index would be meshblock ids?
+                out.index = out.index.astype("int32")
+            except TypeError:
+                pass
+
             if not self._has_multilevel_cols:
                 col_headers = pd.Index(col_headers, name=self.column_dimensions[0])
-            out.columns = col_headers
 
         else:
             if self._has_multilevel_cols:
@@ -308,6 +320,8 @@ class TableBuilderResult:
             col_headers = self.index_headers + col_headers
 
         out.columns = col_headers
+        if drop_totals in ("columns", "both"):
+            out = out.drop(columns="Total")
 
         return out
 
