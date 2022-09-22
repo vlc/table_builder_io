@@ -19,6 +19,7 @@ class HeaderInfo:
         summation: summation text (probably redundant, not seen a dataset with custom summation)
 
     """
+
     authority: str
     dataset: str
     variables: str
@@ -37,7 +38,7 @@ class HeaderInfo:
         parts = m.groupdict()
         default_summation_raw, *filters_raw = m.group("filters").splitlines(keepends=False)
         default_summation = DOUBLE_QUOTE_WRAPPED_THING.findall(default_summation_raw)[1]
-        parts['summation'] = default_summation
+        parts["summation"] = default_summation
 
         filters_clean = []
         if filters_raw != [""]:  # check there are filters
@@ -46,7 +47,13 @@ class HeaderInfo:
                     continue
                 name, value = DOUBLE_QUOTE_WRAPPED_THING.findall(f)
                 filters_clean.append(f"{name}=={value}")
-        parts['filters'] = filters_clean
+        parts["filters"] = filters_clean
 
-        return cls(parts['authority'], parts["dataset"], parts["variables"], parts["counting"], parts["filters"],
-                   parts["summation"])
+        return cls(
+            parts["authority"],
+            parts["dataset"],
+            parts["variables"],
+            parts["counting"],
+            parts["filters"],
+            parts["summation"],
+        )

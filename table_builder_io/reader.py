@@ -19,7 +19,8 @@ from table_builder_io.regexes import (
 
 
 class TableBuilderReader:
-    """Manages reading and parsing raw CSV data from table builder. """
+    """Manages reading and parsing raw CSV data from table builder."""
+
     HEADER_FOOTER_MAX_EXTENT = 20  # maximum candidate size of header / footer, used to limit the search space
     HEADER_PATTERN = re.compile(ABS_HEADER_METADATA_PATTERN)
     FOOTER_PATTERN = re.compile(ABS_FOOTER_METADATA_PATTERN)
@@ -73,11 +74,9 @@ class TableBuilderReader:
             self._raw_header, self._raw_body, self._raw_footer = self.split_metadata()
         return self._raw_footer
 
-    def read_table(self,
-                   *,
-                   as_index=True,
-                   drop_totals: Optional[Literal["rows", "columns", "both"]] = None
-                   ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    def read_table(
+        self, *, as_index=True, drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """Read the Table builder file to a DataFrame.
 
         as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
@@ -93,7 +92,7 @@ class TableBuilderReader:
 
         if len(wafer_title_body_list) == 0:  # No wafers, single body
             out = _parse_main_table(body).get_df(as_index=as_index, drop_totals=drop_totals)
-        elif (len(wafer_title_body_list) % 2) != 0: # Should have same number of wafer headers as bodies
+        elif (len(wafer_title_body_list) % 2) != 0:  # Should have same number of wafer headers as bodies
             raise ValueError("Malformatted or failure, more wafer titles than bodies")
         else:
             # first of triplet is the (empty) pattern before the start of the wafer text
@@ -102,7 +101,7 @@ class TableBuilderReader:
 
             out = {}
             for title, wafer_body in zip(titles, bodies):
-                df = _parse_main_table(wafer_body.strip("\n")).get_df(as_index=as_index,drop_totals=drop_totals)
+                df = _parse_main_table(wafer_body.strip("\n")).get_df(as_index=as_index, drop_totals=drop_totals)
                 out[title] = df
 
         return out
@@ -115,9 +114,7 @@ class TableBuilderReader:
         drops occur.
         """
         return df.drop(
-            index=None if which =="columns" else "Total",
-            columns=None if which =="rows" else "Total",
-            errors="ignore"
+            index=None if which == "columns" else "Total", columns=None if which == "rows" else "Total", errors="ignore"
         )
 
     def read_header_metadata(self) -> HeaderInfo:
@@ -127,8 +124,9 @@ class TableBuilderReader:
     # would rather not give an API than get the API wrong. Also, raw_footer exists to give the raw footer
     # def read_footer_metdata(self):
 
-    def read(self, as_index=True, *,
-                   drop_totals: Optional[Literal["rows", "columns", "both"]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    def read(
+        self, as_index=True, *, drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """Read the Table builder file to a DataFrame. Original API name for `read_table`. read_table is preferred.
 
         as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
@@ -163,7 +161,7 @@ def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pa
     if m is None:
         raise ValueError(f"No match could be found in header text:\n{header_region}\n pattern is:\n{pattern}")
 
-    header = header_region[m.start(): m.end()].strip("\n")
+    header = header_region[m.start() : m.end()].strip("\n")
     body_start_index = m.end()
     return header, body_start_index
 
@@ -178,7 +176,7 @@ def _extract_footer(contents: List[str], footer_maxlines: int, pattern: Union[Pa
         raise ValueError(f"No match could be found in footer text:\n{footer_region}\n pattern is:\n{pattern}")
 
     start_index_as_negative_from_end = m.start() - m.end()
-    footer = footer_region[m.start(): m.end()].strip("\n")
+    footer = footer_region[m.start() : m.end()].strip("\n")
     body_end_index = start_index_as_negative_from_end
     return footer, body_end_index
 
@@ -222,7 +220,7 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
     num_row_index_columns = num_blank_cols_preceding_col_headers + 1
 
     col_dimensions = []
-    column_headers_map: Dict[str: pd.Series] = {}
+    column_headers_map: Dict[str : pd.Series] = {}
     # Find all the columns (multi)index and work out where the rows index starts
     num_entries_in_line_old = None
 
@@ -254,7 +252,7 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
     if not hit_break:
         raise ValueError("Malformed file, never detected the end of index headers")
 
-    rest = lines[n + 1:]
+    rest = lines[n + 1 :]
 
     rows_header_list = RE_QUOTE_WRAPPED_CSV_SPLITTER.findall(row_index_header_row)
     num_col_index_cols = len(column_headers_map[col_dimensions[-1]])  # ncols in csv with data, not labels in them
@@ -270,11 +268,11 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
 
 class TableBuilderResult:
     def __init__(
-            self,
-            df: pd.DataFrame,
-            index_headers: List[str],
-            column_headers: Dict[str, List[str]],
-            column_dimensions: List[str],
+        self,
+        df: pd.DataFrame,
+        index_headers: List[str],
+        column_headers: Dict[str, List[str]],
+        column_dimensions: List[str],
     ):
         self._df = df
         self.index_headers = index_headers
@@ -289,11 +287,9 @@ class TableBuilderResult:
         else:
             return self._column_headers[self.column_dimensions[0]]
 
-    def get_df(self,
-               as_index: bool = True,
-               *,
-               drop_totals: Optional[Literal["rows", "columns", "both"]] = None
-               ) -> pd.DataFrame:
+    def get_df(
+        self, as_index: bool = True, *, drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+    ) -> pd.DataFrame:
         col_headers = self.get_column_headers()
         index_headers = self.index_headers
         out = self._df.copy()

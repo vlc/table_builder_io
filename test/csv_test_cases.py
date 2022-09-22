@@ -16,6 +16,8 @@ class TestData:
 
     def get_full_test_doc(self):
         return self.header + self.body + self.footer
+
+
 # Don't run black on this, format is important
 # fmt: off
 
@@ -562,4 +564,3 @@ Filters:
 "ABS data licensed under Creative Commons, see abs.gov.au/ccby"
 
 """
-

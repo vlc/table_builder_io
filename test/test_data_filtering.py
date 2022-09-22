@@ -12,8 +12,6 @@ path = TEST_DATA_PATH / "mini_testfile.csv"
 reader2 = TableBuilderReader.from_file(path)
 
 
-
-
 @pytest.mark.parametrize("reader", [reader, reader2])
 def test_total_stripping(reader):
     # parametrize to test that the pandas multiindex partial key semantics does what we want
@@ -30,7 +28,6 @@ def test_total_stripping(reader):
     df = reader.read_table(as_index=True, drop_totals="both")
     assert "Total" not in df.index
     assert "Total" not in df.columns
-
 
 
 def test_index_dtype_casting():

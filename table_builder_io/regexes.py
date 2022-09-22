@@ -8,11 +8,11 @@ import re
 
 ANYTHING = ".*"
 
-ANY_NONEMPTY_LINE = ".+\n" # needs to be at least something on the line before the \n
+ANY_NONEMPTY_LINE = ".+\n"  # needs to be at least something on the line before the \n
 ANY_LINE = ".*\n"
 BLANK_LINE = "\n"
 
-DOUBLE_QUOTE_WRAPPED_THING = re.compile('"(.*?)"') # TODO use this in below
+DOUBLE_QUOTE_WRAPPED_THING = re.compile('"(.*?)"')  # TODO use this in below
 RE_QUOTE_WRAPPED_CSV_SPLITTER = re.compile('"(.*?)",')  # keep only the inside the quotes
 RE_QUOTE_WRAPPED_CSV_SPLITTER_AND_CS = re.compile('"(.*?)",|,')  # keep only the inside the quotes
 WAFER_ROW = re.compile(
@@ -52,11 +52,14 @@ ABS_HEADER_METADATA_PATTERN = (
 
 ABS_HEADER_METADATA_PATTERN_WITH_CAPTURE_GROUPS = (
     "^"
-    + named_capture_group(specific_line("Australian Bureau of Statistics"), group_name='authority')
+    + named_capture_group(specific_line("Australian Bureau of Statistics"), group_name="authority")
     + BLANK_LINE
-    + within_double_quotes(named_capture_group(ANYTHING, group_name="dataset"))+"\n"
-    + within_double_quotes(named_capture_group(ANYTHING, group_name="variables"))+"\n"
-    + within_double_quotes(with_prefix('Counting: ', named_capture_group(ANYTHING, group_name="counting")))+"\n"
+    + within_double_quotes(named_capture_group(ANYTHING, group_name="dataset"))
+    + "\n"
+    + within_double_quotes(named_capture_group(ANYTHING, group_name="variables"))
+    + "\n"
+    + within_double_quotes(with_prefix("Counting: ", named_capture_group(ANYTHING, group_name="counting")))
+    + "\n"
     + BLANK_LINE
     + specific_line("Filters:")
     # this looks a little odd, we have a non-capturing group to handle 1 or more repeats of ANY_LINE
