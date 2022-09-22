@@ -127,7 +127,8 @@ class TableBuilderReader:
     # would rather not give an API than get the API wrong. Also, raw_footer exists to give the raw footer
     # def read_footer_metdata(self):
 
-    def read(self, as_index=True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    def read(self, as_index=True, *,
+                   drop_totals: Optional[Literal["rows", "columns", "both"]] = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """Read the Table builder file to a DataFrame. Original API name for `read_table`. read_table is preferred.
 
         as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
