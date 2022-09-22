@@ -9,7 +9,10 @@ Tests are set up to use nox - see `noxfile.py` for details
 
 Releases are done using (Flit)[https://flit.pypa.io/en/latest/] and normally consist of the following steps
 1. Merge all release PRs into master
-2. Make release commit by updating `__version__` in `table_builer_io.__init__.py`
-3. Run `flit publish` - this builds an sdist and wheel and uploads the package to PyPI
-4. Tag the release locally: `git tag vx.x.x`
-5. Upload commit and tags: `git push` and `git push origin <vx.x.x>`
+2. Update CHANGELOG.md
+3. Run nox based test suite
+4. Run black over codebase
+5. Make release commit by updating `__version__` in `table_builer_io.__init__.py`
+6. Run `flit publish` - this builds an sdist and wheel and uploads the package to PyPI
+7. Tag the release locally: `git tag vx.x.x`
+8. Upload commit and tags: `git push` and `git push origin <vx.x.x>`
