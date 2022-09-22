@@ -6,7 +6,7 @@ from typing import Tuple, List, IO, Dict, Union, Pattern, Optional
 from warnings import warn
 
 import pandas as pd
-from typing_extensions import Self
+from typing_extensions import Self, Literal
 
 from table_builder_io.parse_metadata import HeaderInfo
 from table_builder_io.regexes import (
@@ -73,7 +73,11 @@ class TableBuilderReader:
             self._raw_header, self._raw_body, self._raw_footer = self.split_metadata()
         return self._raw_footer
 
-    def read_table(self, as_index=True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    def read_table(self,
+                   *,
+                   as_index=True,
+                   drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+                   ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
         """Read the Table builder file to a DataFrame.
 
         as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
@@ -88,9 +92,10 @@ class TableBuilderReader:
         wafer_title_body_list = WAFER_ROW.split(body)[1:]
 
         if len(wafer_title_body_list) == 0:  # No wafers, single body
-            result = _parse_main_table(body)
-            return result.get_df(as_index=as_index)
-        if (len(wafer_title_body_list) % 2) != 0:
+            out = _parse_main_table(body).get_df(as_index=as_index)
+            if drop_totals is not None:
+                out = self.drop_totals(out, which=drop_totals)
+        elif (len(wafer_title_body_list) % 2) != 0: # Should have same number of wafer headers as bodies
             raise ValueError("Malformatted or failure, more wafer titles than bodies")
         else:
             # first of triplet is the (empty) pattern before the start of the wafer text
@@ -99,10 +104,20 @@ class TableBuilderReader:
 
             out = {}
             for title, wafer_body in zip(titles, bodies):
-                df = _parse_main_table(wafer_body.strip("\n")).get_df(as_index)
+                df = _parse_main_table(wafer_body.strip("\n")).get_df(as_index=as_index)
+                if drop_totals is not None:
+                    df = self.drop_totals(df, which=drop_totals)
                 out[title] = df
 
-            return out
+        return out
+
+    @staticmethod
+    def drop_totals(df:pd.DataFrame, which:Literal["rows", "columns", "both"])->pd.DataFrame:
+        return df.drop(
+            index=None if which =="columns" else "Total",
+            columns=None if which =="rows" else "Total",
+            errors="ignore"
+        )
 
     def read_header_metadata(self) -> HeaderInfo:
         return HeaderInfo.from_raw_text(self.raw_header)
@@ -272,7 +287,7 @@ class TableBuilderResult:
         else:
             return self._column_headers[self.column_dimensions[0]]
 
-    def get_df(self, as_index=True):
+    def get_df(self, as_index: bool = True) -> pd.DataFrame:
         col_headers = self.get_column_headers()
         index_headers = self.index_headers
         out = self._df.copy()

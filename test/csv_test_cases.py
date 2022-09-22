@@ -1,23 +1,23 @@
-# Don't run black on this, format is important
-# fmt: off
 from dataclasses import dataclass
 from typing import List
+
 import pandas as pd
 
 
 @dataclass
 class TestData:
-    header : str
+    header: str
     body: str
     footer: str
     row_headers: List[str]
     col_headers: List[str]
-    column_dimensions:List[str]
+    column_dimensions: List[str]
     index_cols_df: pd.DataFrame
 
     def get_full_test_doc(self):
-        return self.header + self.body+self.footer
-
+        return self.header + self.body + self.footer
+# Don't run black on this, format is important
+# fmt: off
 
 MULTILEVEL_ROWS_HEADER = """Australian Bureau of Statistics
 
@@ -467,4 +467,42 @@ MUTTILEVEL_RAGGED_FFILL_TEST = pd.DataFrame(
 )
 MUTTILEVEL_RAGGED_FFILL_TEST.columns =MUTTILEVEL_RAGGED_FFILL_TEST.columns.rename('STATE')
 MUTTILEVEL_RAGGED_FFILL_TEST.index =MUTTILEVEL_RAGGED_FFILL_TEST.index.rename(['SEXP Sex', 'FMGF - 1 Digit Level'])
+
+
+DATASET_WITH_INT_ROWS_AND_TOTALS ="""Australian Bureau of Statistics
+
+"2016 Census - Counting Persons, Place of Usual Residence (MB)"
+"SA1 (UR) by SEXP Sex"
+"Counting: Persons Place of Usual Residence"
+
+Filters:
+"Default Summation","Persons Place of Usual Residence"
+
+"SEXP Sex","Male","Female","Total",
+"SA1 (UR)",
+"3100101",209,198,406,
+"3100102",154,166,320,
+"3100103",282,283,567,
+"3100104",173,198,367,
+"1160905",212,207,420,
+"1160906",199,189,391,
+"1160907",181,185,364,
+"1160908",205,217,423,
+"1160909",107,135,239,
+"1160910",237,244,488,
+"1979991",0,0,0,
+"1979992",3,0,4,
+"1979993",170,239,409,
+"1949999",7353,4938,12288,
+"Total",6007898,6175522,12183421,
+
+"Dataset: Census of Population and Housing, 2016, TableBuilder"
+
+"INFO","Cells in this table have been randomly adjusted to avoid the release of confidential data. No reliance should be placed on small cells."
+
+
+"Copyright Commonwealth of Australia, 2021, see abs.gov.au/copyright"
+"ABS data licensed under Creative Commons, see abs.gov.au/ccby"
+
+"""
 
