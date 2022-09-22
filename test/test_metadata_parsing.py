@@ -54,9 +54,6 @@ class TestMetadataSplitting(unittest.TestCase):
         raw = FILTERS_2021_DATA_HEADER
         regex = ABS_HEADER_METADATA_PATTERN_WITH_CAPTURE_GROUPS
         m = re.match(regex, raw)
-        print(m.groups())
-        print(m.group(0))
-        print(m.group("dataset"))
         hi = HeaderInfo.from_raw_text(raw)
         self.assertEqual(hi.dataset, "2021 Census - counting persons, place of usual residence")
         self.assertEqual(

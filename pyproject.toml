@@ -10,7 +10,11 @@ authors = [
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
-classifiers = ["License :: OSI Approved :: MIT License"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3"
+]
 requires-python = ">=3.6"
 dynamic = ["version", "description"]
 dependencies = [
