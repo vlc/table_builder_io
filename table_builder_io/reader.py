@@ -113,9 +113,14 @@ class TableBuilderReader:
         Note this is not used in the internal implementation so that int dtype promotion checking can happen after
         drops occur.
         """
-        return df.drop(
-            index=None if which == "columns" else "Total", columns=None if which == "rows" else "Total", errors="ignore"
-        )
+        if isinstance(df.index, pd.MultiIndex):
+            level = 0
+        else:
+            level = None
+        index = None if which == "columns" else "Total"
+        columns = None if which == "rows" else "Total"
+
+        return df.drop(index=index, level=level, columns=columns, errors="ignore")
 
     def read_header_metadata(self) -> HeaderInfo:
         return HeaderInfo.from_raw_text(self.raw_header)
@@ -296,7 +301,11 @@ class TableBuilderResult:
         if as_index:
             out = out.set_index(index_headers)
             if drop_totals in ("rows", "both"):
-                out = out.drop(index="Total")
+                if isinstance(out.index, pd.MultiIndex):
+                    level = 0
+                else:
+                    level = None
+                out = out.drop(index="Total", level=level)
             try:
                 # int32 is probably safe, largest index would be meshblock ids?
                 out.index = out.index.astype("int32")
