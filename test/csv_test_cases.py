@@ -318,8 +318,16 @@ FILTERS_2021_DATA = FILTERS_2021_DATA_HEADER+ FILTERS_2021_DATA_BODY+FILTERS_202
 FILTERS_2021_DATA_ROW_HEADERS = ['SAL (UR)']
 FILTERS_2021_DATA_COL_HEADERS = ["Non-Indigenous","Aboriginal","Torres Strait Islander","Both Aboriginal and Torres Strait Islander","Not stated","Total"]
 FILTERS_2021_DATA_DIMENSION = ["INGP Indigenous Status"]
-FILTERS_2021_DATA_INDEX = pd.DataFrame(
-    {'SAL (UR)': ["Non-Indigenous","Aboriginal","Torres Strait Islander","Both Aboriginal and Torres Strait Islander","Not stated","Total"]}
+FILTERS_2021_DATA_INDEX = pd.DataFrame.from_dict({'SAL (UR)':
+    {
+        0: 'Aarons Pass',
+        1: 'Abbotsbury',
+        2: 'Jervis Bay',
+        3: 'Norfolk Island',
+        4: 'West Island',
+        5: 'No usual address (OT)',
+        6: 'Migratory - Offshore - Shipping (OT)',
+        7: 'Total'}}
 )
 
 FILTERS_2021_DATA_TEST_DATA = TestData(FILTERS_2021_DATA_HEADER, FILTERS_2021_DATA_BODY, FILTERS_2021_DATA_FOOTER,

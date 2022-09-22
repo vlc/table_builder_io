@@ -35,8 +35,8 @@ class TestMetadataSplitting(unittest.TestCase):
         for test_case in TESTS:  # this would be nicer with pytest parametrize
             with self.subTest(header=test_case.header):
                 expected = test_case.header.strip("\n")
-                file_string = extract_format(test_case.get_full_test_doc())
-                header_actual, _ = _extract_header(file_string, 20,
+                file_lines = extract_format(test_case.get_full_test_doc())
+                header_actual, _ = _extract_header(file_lines, 20,
                                                    pattern=ABS_HEADER_METADATA_PATTERN)
                 self.assertEqual(expected, header_actual)
 

@@ -29,14 +29,12 @@ class HeaderInfo:
     @classmethod
     def from_raw_text(cls, text: str) -> Self:
         # This is relying on the regex header match ABS_HEADER_METADATA_PATTERN for structure
+        if not text.endswith("\n"):
+            text += "\n"  # Regex is easier to write if we ensure we have newlines passed in here
+            # (note that we don't have newlines by default because the file section detection removes extra newlines)
+
         m = re.match(ABS_HEADER_METADATA_PATTERN_WITH_CAPTURE_GROUPS, text)
         parts = m.groupdict()
-        # parts = {
-        #     "authority":m.group("authority"),
-        #     "dataset":m.group("dataset"),
-        #     "variables":m.group("variables"),
-        #     "counting": m.group("counting"),
-        # }
         default_summation_raw, *filters_raw = m.group("filters").splitlines(keepends=False)
         default_summation = DOUBLE_QUOTE_WRAPPED_THING.findall(default_summation_raw)[1]
         parts['summation'] = default_summation

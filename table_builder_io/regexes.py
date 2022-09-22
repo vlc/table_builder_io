@@ -8,6 +8,7 @@ import re
 
 ANYTHING = ".*"
 
+ANY_NONEMPTY_LINE = ".+\n" # needs to be at least something on the line before the \n
 ANY_LINE = ".*\n"
 BLANK_LINE = "\n"
 
@@ -44,7 +45,7 @@ ABS_HEADER_METADATA_PATTERN = (
     + with_prefix('"Counting:', ANY_LINE)
     + BLANK_LINE
     + specific_line("Filters:")
-    + ANY_LINE  # there is a least one line after filters (default summation) + any actual filters
+    + f"(?:{ANY_NONEMPTY_LINE})+"  # there is at least one line after filters (default summation) + any actual filters
     + BLANK_LINE
 )
 
