@@ -13,18 +13,34 @@ from table_builder_io.reader import (
 )
 from table_builder_io.regexes import ABS_HEADER_METADATA_PATTERN, ABS_FOOTER_METADATA_PATTERN
 from csv_test_cases import (
-    MULTILEVEL_ROWS_TEST_DATA, MULTILEVEL_ROWS2_TEST_DATA,
-    SPATIAL_X_ATTR1_TEST_DATA, OD_DATA1_TEST_DATA, MULTILEVEL_ROWS, MULTILEVEL_ROWS_HEADER, MULTILEVEL_ROWS_BODY,
-    MULTILEVEL_ROWS_FOOTER, COL_MULTIINDEX_DATA_TEST_DATA, MULTILEVEL_FLAT_EXPECTED,
-    MULTILEVEL_MULTIINDEX_EXPECTED, MUTTILEVEL_RAGGED_FFILL_TEST,
+    MULTILEVEL_ROWS_TEST_DATA,
+    MULTILEVEL_ROWS2_TEST_DATA,
+    SPATIAL_X_ATTR1_TEST_DATA,
+    OD_DATA1_TEST_DATA,
+    MULTILEVEL_ROWS,
+    MULTILEVEL_ROWS_HEADER,
+    MULTILEVEL_ROWS_BODY,
+    MULTILEVEL_ROWS_FOOTER,
+    COL_MULTIINDEX_DATA_TEST_DATA,
+    MULTILEVEL_FLAT_EXPECTED,
+    MULTILEVEL_MULTIINDEX_EXPECTED,
+    MUTTILEVEL_RAGGED_FFILL_TEST,
+    FILTERS_2021_DATA_TEST_DATA,
 )
 
 
 def extract_format(string):
     return StringIO(string).readlines()  # there's probably a nicer way
 
-TESTS = [MULTILEVEL_ROWS_TEST_DATA, MULTILEVEL_ROWS2_TEST_DATA, SPATIAL_X_ATTR1_TEST_DATA,
-         OD_DATA1_TEST_DATA, COL_MULTIINDEX_DATA_TEST_DATA]
+
+TESTS = [
+    MULTILEVEL_ROWS_TEST_DATA,
+    MULTILEVEL_ROWS2_TEST_DATA,
+    SPATIAL_X_ATTR1_TEST_DATA,
+    OD_DATA1_TEST_DATA,
+    COL_MULTIINDEX_DATA_TEST_DATA,
+    FILTERS_2021_DATA_TEST_DATA,
+]
 
 TEST_DATA_PATH = Path(__file__).parent
 
@@ -35,13 +51,12 @@ class TestMetadataSplitting(unittest.TestCase):
         for test_case in TESTS:  # this would be nicer with pytest parametrize
             with self.subTest(header=test_case.header):
                 expected = test_case.header.strip("\n")
-                file_string = extract_format(test_case.get_full_test_doc())
-                header_actual, _ = _extract_header(file_string, 20,
-                                                   pattern=ABS_HEADER_METADATA_PATTERN)
+                file_lines = extract_format(test_case.get_full_test_doc())
+                header_actual, _ = _extract_header(file_lines, 20, pattern=ABS_HEADER_METADATA_PATTERN)
                 self.assertEqual(expected, header_actual)
 
     def test_footer_extraction(self):
-        for test_case in TESTS:   # this would be nicer with pytest parametrize
+        for test_case in TESTS:  # this would be nicer with pytest parametrize
             expected = test_case.footer.strip("\n")
             with self.subTest(header=expected):
                 file_string = extract_format(test_case.get_full_test_doc())
@@ -60,8 +75,8 @@ class TestMetadataSplitting(unittest.TestCase):
                 col_headers = res.get_column_headers()
                 # A little hacky, but makes test cases easier to write
                 if isinstance(col_headers, pd.MultiIndex):
-                    col_headers = ['_'.join(col).strip() for col in col_headers]
-                self.assertEqual(col_headers, test_case.col_headers)
+                    col_headers = ["_".join(col).strip() for col in col_headers]
+                self.assertEqual(col_headers, expected_cols)
                 self.assertEqual(res.column_dimensions, test_case.column_dimensions)
 
     def test_index_extraction(self):
@@ -73,7 +88,6 @@ class TestMetadataSplitting(unittest.TestCase):
 
                 expected = test_case.index_cols_df
                 assert_frame_equal(res._df[res.index_headers], expected)
-
 
 
 class SpecificCaseChecks(unittest.TestCase):
@@ -91,12 +105,11 @@ class SpecificCaseChecks(unittest.TestCase):
         # assert body == MULTILEVEL_ROWS_BODY
         # assert footer == MULTILEVEL_ROWS_FOOTER
 
-
     def test_multiindex_cols_as_index_false(self):
         expected = MULTILEVEL_FLAT_EXPECTED
 
         reader = TableBuilderReader.from_string(COL_MULTIINDEX_DATA_TEST_DATA.get_full_test_doc())
-        with self.assertWarns(UserWarning, msg='Column labels are not very useful with as_index=False'):
+        with self.assertWarns(UserWarning, msg="Column labels are not very useful with as_index=False"):
             actual = reader.read(as_index=False)
         assert_frame_equal(expected, actual)
 

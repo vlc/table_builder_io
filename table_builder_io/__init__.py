@@ -2,3 +2,4 @@
 from .reader import TableBuilderReader
 
 __version__ = "0.0.5"
+

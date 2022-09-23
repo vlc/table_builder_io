@@ -1,12 +1,14 @@
 import re
 from dataclasses import dataclass
 from io import StringIO
+from pathlib import Path
+from typing import Tuple, List, IO, Dict, Union, Pattern, Optional
 from warnings import warn
 
 import pandas as pd
-from pathlib import Path
-from typing import Tuple, List, IO, Dict, Union, Pattern
+from typing_extensions import Self, Literal
 
+from table_builder_io.parse_metadata import HeaderInfo
 from table_builder_io.regexes import (
     ABS_HEADER_METADATA_PATTERN,
     ABS_FOOTER_METADATA_PATTERN,
@@ -17,37 +19,128 @@ from table_builder_io.regexes import (
 
 
 class TableBuilderReader:
-    HEADER_FOOTER_MAX_EXTENT = 20
+    """Manages reading and parsing raw CSV data from table builder."""
+
+    HEADER_FOOTER_MAX_EXTENT = 20  # maximum candidate size of header / footer, used to limit the search space
     HEADER_PATTERN = re.compile(ABS_HEADER_METADATA_PATTERN)
     FOOTER_PATTERN = re.compile(ABS_FOOTER_METADATA_PATTERN)
 
     def __init__(self, line_list: List[str]):
         self.lines = line_list
 
+        # private methods to store partitioned data, dealing with less than optimal api choices.
+        # This is due to these being retrieved as a group of three, but only consumed individually
+        self._raw_header: Optional[str] = None
+        self._raw_body: Optional[str] = None
+        self._raw_footer: Optional[str] = None
+
     @classmethod
-    def from_file(cls, path: Union[Path, str]):
+    def from_file(cls, path: Union[Path, str]) -> Self:
         """Create a TableBuilderReader from file"""
         with open(path, "r") as f:
             contents = f.readlines()
         return cls(contents)
 
     @classmethod
-    def from_file_handler(cls, fh: IO[str]):
+    def from_file_handler(cls, fh: IO[str]) -> Self:
         """Create a TableBuilderReader from an open file handler ( e.g. from f in `with open(fpath, 'r') as f:`)"""
         return cls(fh.readlines())
 
     @classmethod
-    def from_string(cls, string: str):
+    def from_string(cls, string: str) -> Self:
         """Create a TableBuilderReader from a string containing a TableBuilder CSV as its contents"""
         # expect everything to end with a newline, consistent with readlines
         # Note this is marginally quicker than io.StringIO(string).readlines()
-        return cls([i + "\n" for i in string.strip("\n").split("\n")])
+        return cls([i + "\n" for i in string.strip("\n").splitlines()])
 
-    def _extract_header(self):
-        return _extract_header(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.HEADER_PATTERN)
+    @property
+    def raw_header(self) -> str:
+        """Retrieve the raw metadata header. Deliberately read only."""
+        if self._raw_header is None:
+            self._raw_header, self._raw_body, self._raw_footer = self.split_metadata()
+        return self._raw_header
 
-    def _extract_footer(self):
-        return _extract_footer(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.FOOTER_PATTERN)
+    @property
+    def raw_body(self) -> str:
+        """Retrieve the plaintext "body" of the tablebuilder "document" i.e. the table part. Deliberately read only."""
+        if self._raw_header is None:
+            self._raw_header, self._raw_body, self._raw_footer = self.split_metadata()
+        return self._raw_body
+
+    @property
+    def raw_footer(self) -> str:
+        """Retrieve the raw metadata footer. Deliberately read only."""
+        if self._raw_header is None:
+            self._raw_header, self._raw_body, self._raw_footer = self.split_metadata()
+        return self._raw_footer
+
+    def read_table(
+        self, *, as_index=True, drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+        """Read the Table builder file to a DataFrame.
+
+        as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
+            This mimics the actual layout in the CSV.
+        as_index=False will return the data as a flat single level column index, which may be more convenient
+            depending on how it is being used.
+
+        """
+        body = self.raw_body
+        # First split is between text before wafer (which is empty, because any text before that's non-empty
+        # constitutes the header). So drop the first split
+        wafer_title_body_list = WAFER_ROW.split(body)[1:]
+
+        if len(wafer_title_body_list) == 0:  # No wafers, single body
+            out = _parse_main_table(body).get_df(as_index=as_index, drop_totals=drop_totals)
+        elif (len(wafer_title_body_list) % 2) != 0:  # Should have same number of wafer headers as bodies
+            raise ValueError("Malformatted or failure, more wafer titles than bodies")
+        else:
+            # first of triplet is the (empty) pattern before the start of the wafer text
+            titles = wafer_title_body_list[::2]
+            bodies = wafer_title_body_list[1::2]
+
+            out = {}
+            for title, wafer_body in zip(titles, bodies):
+                df = _parse_main_table(wafer_body.strip("\n")).get_df(as_index=as_index, drop_totals=drop_totals)
+                out[title] = df
+
+        return out
+
+    @staticmethod
+    def drop_totals(df: pd.DataFrame, which: Literal["rows", "columns", "both"]) -> pd.DataFrame:
+        """Convenience method to drop total rows/ columns from dataframe if they are unused in analysis.
+
+        Note this is not used in the internal implementation so that int dtype promotion checking can happen after
+        drops occur.
+        """
+        if isinstance(df.index, pd.MultiIndex):
+            level = 0
+        else:
+            level = None
+        index = None if which == "columns" else "Total"
+        columns = None if which == "rows" else "Total"
+
+        return df.drop(index=index, level=level, columns=columns, errors="ignore")
+
+    def read_header_metadata(self) -> HeaderInfo:
+        return HeaderInfo.from_raw_text(self.raw_header)
+
+    # Can't see a good use for this, could provide as plaintext but that would be inconsistent with above
+    # would rather not give an API than get the API wrong. Also, raw_footer exists to give the raw footer
+    # def read_footer_metdata(self):
+
+    def read(
+        self, as_index=True, *, drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+    ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+        """Read the Table builder file to a DataFrame. Original API name for `read_table`. read_table is preferred.
+
+        as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
+            This mimics the actual layout in the CSV.
+        as_index=False will return the data as a flat single level column index, which may be more convenient
+            depending on how it is being used.
+
+        """
+        return self.read_table(as_index=as_index)
 
     def split_metadata(self) -> Tuple[str, str, str]:
         header, body_start_idx = self._extract_header()
@@ -57,40 +150,14 @@ class TableBuilderReader:
 
         return header, body, footer
 
-    def read(self, as_index=True) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
-        """Read the Table builder file to a DataFrame.
+    def _extract_header(self) -> Tuple[str, int]:
+        return _extract_header(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.HEADER_PATTERN)
 
-        as_index=True will return a result dataframe where the row and column labels are set as (multi)indexes.
-            This mimics the actual layout in the CSV.
-        as_index=False will return the data as a flat single level column index, which may be more convenient
-            depending on how it is being used.
-
-        """
-        header, body, footer = self.split_metadata()
-        # TODO return the header metadata in a useful way?
-        # First split is between text before wafer (nothing because it's in the header) and the first wafer
-        # so we drop it
-        wafer_title_body_list = WAFER_ROW.split(body)[1:]
-
-        if len(wafer_title_body_list) == 0:  # No wafers, single body
-            result = _parse_main_table(body)
-            return result.get_df(as_index=as_index)
-        if (len(wafer_title_body_list) % 2) != 0:
-            raise ValueError("Malformatted or failure, more wafer titles than bodies")
-        else:
-            # first of triplet is the (empty) pattern before the start of the wafer text
-            titles = wafer_title_body_list[::2]
-            bodies = wafer_title_body_list[1::2]
-
-            out = {}
-            for title, wafer_body in zip(titles, bodies):
-                df = _parse_main_table(wafer_body.strip("\n")).get_df(as_index)
-                out[title] = df
-
-            return out
+    def _extract_footer(self) -> Tuple[str, int]:
+        return _extract_footer(self.lines, self.HEADER_FOOTER_MAX_EXTENT, self.FOOTER_PATTERN)
 
 
-def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pattern, str]):
+def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pattern, str]) -> Tuple[str, int]:
     if not isinstance(contents, List):
         raise ValueError("'contents' should be newline delimited list")
 
@@ -104,7 +171,7 @@ def _extract_header(contents: List[str], header_maxlines: int, pattern: Union[Pa
     return header, body_start_index
 
 
-def _extract_footer(contents: List[str], footer_maxlines: int, pattern: Union[Pattern, str]):
+def _extract_footer(contents: List[str], footer_maxlines: int, pattern: Union[Pattern, str]) -> Tuple[str, int]:
     if not isinstance(contents, List):
         raise ValueError("'contents' should be newline delimited list")
 
@@ -143,6 +210,10 @@ def _at_index_headers(line: str, line_no: int, num_entries_in_line, num_entries_
 
 
 def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
+    """Parse the column headers of a data section of the Table Builder file.
+
+    Note this is not parsing the metadata header at the start of the entire file.
+    """
     # pull the (multiindex) column headers off the data
     # Do this by detecting the first index row (which must end with blank cells underneath the column headers)
 
@@ -157,6 +228,9 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
     column_headers_map: Dict[str : pd.Series] = {}
     # Find all the columns (multi)index and work out where the rows index starts
     num_entries_in_line_old = None
+
+    hit_break = False
+
     for n, line in enumerate(lines):
         # this ignores the preceding commas before columns / above index (they're not quote wrapped)
         row_items = RE_QUOTE_WRAPPED_CSV_SPLITTER_AND_CS.findall(line)
@@ -175,9 +249,14 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
 
             num_entries_in_line_old = num_entries_in_line
         else:
+            # This case will always be hit eventually
             row_index_header_row = line  # == lines[n]
+            hit_break = True
             break
     # rest of table  - the data beyond the headers
+    if not hit_break:
+        raise ValueError("Malformed file, never detected the end of index headers")
+
     rest = lines[n + 1 :]
 
     rows_header_list = RE_QUOTE_WRAPPED_CSV_SPLITTER.findall(row_index_header_row)
@@ -213,15 +292,28 @@ class TableBuilderResult:
         else:
             return self._column_headers[self.column_dimensions[0]]
 
-    def get_df(self, as_index=True):
+    def get_df(
+        self, as_index: bool = True, *, drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+    ) -> pd.DataFrame:
         col_headers = self.get_column_headers()
         index_headers = self.index_headers
         out = self._df.copy()
         if as_index:
             out = out.set_index(index_headers)
+            if drop_totals in ("rows", "both"):
+                if isinstance(out.index, pd.MultiIndex):
+                    level = 0
+                else:
+                    level = None
+                out = out.drop(index="Total", level=level)
+            try:
+                # int32 is probably safe, largest index would be meshblock ids?
+                out.index = out.index.astype("int32")
+            except TypeError:
+                pass
+
             if not self._has_multilevel_cols:
                 col_headers = pd.Index(col_headers, name=self.column_dimensions[0])
-            out.columns = col_headers
 
         else:
             if self._has_multilevel_cols:
@@ -234,6 +326,8 @@ class TableBuilderResult:
             col_headers = self.index_headers + col_headers
 
         out.columns = col_headers
+        if drop_totals in ("columns", "both"):
+            out = out.drop(columns="Total")
 
         return out
 
