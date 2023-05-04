@@ -309,7 +309,7 @@ class TableBuilderResult:
             try:
                 # int32 is probably safe, largest index would be meshblock ids?
                 out.index = out.index.astype("int32")
-            except TypeError:
+            except (TypeError, ValueError):
                 pass
 
             if not self._has_multilevel_cols:
