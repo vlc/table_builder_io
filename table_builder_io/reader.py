@@ -307,9 +307,9 @@ class TableBuilderResult:
                     level = None
                 out = out.drop(index="Total", level=level)
             try:
-                # int32 is probably safe, largest index would be meshblock ids?
-                out.index = out.index.astype("int32")
-            except (TypeError, ValueError):
+
+                out.index = out.index.astype("int64")
+            except (TypeError, OverflowError):
                 pass
 
             if not self._has_multilevel_cols:
@@ -324,6 +324,8 @@ class TableBuilderResult:
                 col_headers = ["_".join(col).strip() for col in col_headers]
 
             col_headers = self.index_headers + col_headers
+            if drop_totals in ("rows", "both"):
+                warn("dropping row totals not supported with index=False, ignoring")
 
         out.columns = col_headers
         if drop_totals in ("columns", "both"):
@@ -345,6 +347,7 @@ def _parse_main_table(body: str) -> TableBuilderResult:
         header=None,
         names=None,  # add the names after the fact, because they could be a multiindex
         engine="c",
+        low_memory=False
     )
     # Fill the sparse ragged index will values in the dataframe
     for c in formatted_data.columns[: result.num_row_index_cols]:
