@@ -106,7 +106,9 @@ class TableBuilderReader:
 
         return out
 
-    def read_table_to_long_format(self, *, as_index=True, drop_totals: Optional[Literal["rows", "columns", "both"]] = None):
+    def read_table_to_long_format(
+        self, *, as_index=True, drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+    ):
         result = self.read_table(as_index=True, drop_totals=drop_totals)
         if isinstance(result, pd.DataFrame):
             return result.stack().to_frame("value")
@@ -118,9 +120,6 @@ class TableBuilderReader:
 
         else:
             raise ValueError("Unexpected type")
-
-
-
 
     @staticmethod
     def drop_totals(df: pd.DataFrame, which: Literal["rows", "columns", "both"]) -> pd.DataFrame:
@@ -253,7 +252,6 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
         num_entries_in_line = len(row_items)
 
         if not _at_index_headers(line, n, num_entries_in_line, num_entries_in_line_old):
-
             col_header_label, *col_headers_list = row_items[num_blank_cols_preceding_col_headers:]
 
             # Multiindex headers are Ragged e.g. Age-Gender, will be [10, M], [ ,F], [11, M], [ , F], ...
@@ -323,7 +321,6 @@ class TableBuilderResult:
                     level = None
                 out = out.drop(index="Total", level=level)
             try:
-
                 out.index = out.index.astype("int64")
             except (TypeError, OverflowError, ValueError):
                 pass
@@ -363,7 +360,7 @@ def _parse_main_table(body: str) -> TableBuilderResult:
         header=None,
         names=None,  # add the names after the fact, because they could be a multiindex
         engine="c",
-        low_memory=False
+        low_memory=False,
     )
     # Fill the sparse ragged index will values in the dataframe
     for c in formatted_data.columns[: result.num_row_index_cols]:
