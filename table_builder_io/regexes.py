@@ -71,7 +71,7 @@ ABS_HEADER_METADATA_PATTERN_WITH_CAPTURE_GROUPS = (
 
 ABS_FOOTER_METADATA_PATTERN = (
     # specific_line('"Dataset: Census of Population and Housing, 2016, TableBuilder"')
-    '"(Dataset|Data Source): Census of Population and Housing, (2016|2021), TableBuilder"\n'
+    '"(Dataset|Data Source|Data source): Census of Population and Housing, (2016|2021), TableBuilder"\n'
     + BLANK_LINE
     + with_prefix('"INFO"', ANY_LINE)
     + BLANK_LINE

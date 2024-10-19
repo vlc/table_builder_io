@@ -1,3 +1,6 @@
+## Version 0.2 (October, 2024)
+- BUG: Fix reading footer for newer census metadata
+
 ## Version 0.1 (September, 2022)
 
 - ENH: Add ability to extract parts of header metadata via 

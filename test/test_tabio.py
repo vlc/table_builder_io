@@ -146,3 +146,9 @@ class SpecificCaseChecks(unittest.TestCase):
         path = TEST_DATA_PATH / "mini_testfile_dataset_footer_variant.csv"
         reader = TableBuilderReader.from_file(path)
         assert_frame_equal(reader.read(as_index=True), MUTTILEVEL_RAGGED_FFILL_TEST)
+
+    def test_dataset_footer_variant2(self):
+        # Footer has changed, post 2021
+        path = TEST_DATA_PATH / "mini_testfile_dataset_footer_variant2.csv"
+        reader = TableBuilderReader.from_file(path)
+        assert_frame_equal(reader.read(as_index=True), MUTTILEVEL_RAGGED_FFILL_TEST)
