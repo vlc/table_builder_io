@@ -35,3 +35,19 @@ def test_index_dtype_casting():
     assert df.index.dtype == "object"
     df = reader.read_table(as_index=True, drop_totals="rows")
     assert is_integer_dtype(df.index.dtype)
+
+def test_long_format_processing():
+    path = TEST_DATA_PATH / "sa2_pow_vs_sa2_ur_bne_bc_worker_total_wafer.csv"
+    reader = TableBuilderReader.from_file(path)
+    df = reader.read_table_to_long_format(as_index=True)
+    expected_wafers = {"Technicians and Trades Workers", "Machinery Operators and Drivers", "Labourers", "Total"}
+    assert set(df.columns) == expected_wafers
+    assert df.index.names == ['SA2 (POW)', 'SA2 (UR)']
+    assert df.reset_index()['SA2 (POW)'].nunique() ==138
+    assert df.reset_index()['SA2 (UR)'].nunique() ==138
+    row = df.loc[("Morningside - Seven Hills", "Thornlands"), :]
+    assert row["Technicians and Trades Workers"].item() ==14
+    assert row["Total"].item() ==24
+
+
+
