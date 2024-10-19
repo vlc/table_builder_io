@@ -1,3 +1,10 @@
+## Version 0.2 (October, 2024)
+- BUG: Fix reading footer for newer census metadata
+- ENH: add reader.read_table_to_long_format util to convert raw data to a long format "tidy" dataset
+
+## Version 0.1.1
+- Tagged but unreleased.
+
 ## Version 0.1 (September, 2022)
 
 - ENH: Add ability to extract parts of header metadata via 

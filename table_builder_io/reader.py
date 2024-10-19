@@ -106,6 +106,21 @@ class TableBuilderReader:
 
         return out
 
+    def read_table_to_long_format(
+        self, *, as_index=True, drop_totals: Optional[Literal["rows", "columns", "both"]] = None
+    ):
+        result = self.read_table(as_index=True, drop_totals=drop_totals)
+        if isinstance(result, pd.DataFrame):
+            return result.stack().to_frame("value")
+        elif isinstance(result, dict):
+            result_long = pd.concat((df.stack().to_frame(wafer_name) for (wafer_name, df) in result.items()), axis=1)
+            if not as_index:
+                result_long = result_long.reset_index()
+            return result_long
+
+        else:
+            raise ValueError("Unexpected type")
+
     @staticmethod
     def drop_totals(df: pd.DataFrame, which: Literal["rows", "columns", "both"]) -> pd.DataFrame:
         """Convenience method to drop total rows/ columns from dataframe if they are unused in analysis.
@@ -237,7 +252,6 @@ def _parse_data_headers(lines: List[str]) -> ParsedHeaderData:
         num_entries_in_line = len(row_items)
 
         if not _at_index_headers(line, n, num_entries_in_line, num_entries_in_line_old):
-
             col_header_label, *col_headers_list = row_items[num_blank_cols_preceding_col_headers:]
 
             # Multiindex headers are Ragged e.g. Age-Gender, will be [10, M], [ ,F], [11, M], [ , F], ...
@@ -307,9 +321,8 @@ class TableBuilderResult:
                     level = None
                 out = out.drop(index="Total", level=level)
             try:
-
                 out.index = out.index.astype("int64")
-            except (TypeError, OverflowError):
+            except (TypeError, OverflowError, ValueError):
                 pass
 
             if not self._has_multilevel_cols:
@@ -347,7 +360,7 @@ def _parse_main_table(body: str) -> TableBuilderResult:
         header=None,
         names=None,  # add the names after the fact, because they could be a multiindex
         engine="c",
-        low_memory=False
+        low_memory=False,
     )
     # Fill the sparse ragged index will values in the dataframe
     for c in formatted_data.columns[: result.num_row_index_cols]:

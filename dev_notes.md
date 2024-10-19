@@ -11,7 +11,7 @@ Releases are done using (Flit)[https://flit.pypa.io/en/latest/] and normally con
 1. Merge all release PRs into master
 2. Update CHANGELOG.md
 3. Run nox based test suite
-4. Run black over codebase
+4. Run ruff format over codebase (uvx ruff format --line-length=120 .)
 5. Make release commit by updating `__version__` in `table_builer_io.__init__.py`
 6. Run `flit publish` - this builds an sdist and wheel and uploads the package to PyPI
 7. Tag the release locally: `git tag vx.x.x`

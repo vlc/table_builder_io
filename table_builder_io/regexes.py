@@ -16,7 +16,8 @@ DOUBLE_QUOTE_WRAPPED_THING = re.compile('"(.*?)"')  # TODO use this in below
 RE_QUOTE_WRAPPED_CSV_SPLITTER = re.compile('"(.*?)",')  # keep only the inside the quotes
 RE_QUOTE_WRAPPED_CSV_SPLITTER_AND_CS = re.compile('"(.*?)",|,')  # keep only the inside the quotes
 WAFER_ROW = re.compile(
-    '^" (.*)"$', re.MULTILINE  # Wafer lines contain no commas, single quote wrapped entry starting with a space
+    '^" (.*)"$',
+    re.MULTILINE,  # Wafer lines contain no commas, single quote wrapped entry starting with a space
 )
 
 
@@ -71,7 +72,7 @@ ABS_HEADER_METADATA_PATTERN_WITH_CAPTURE_GROUPS = (
 
 ABS_FOOTER_METADATA_PATTERN = (
     # specific_line('"Dataset: Census of Population and Housing, 2016, TableBuilder"')
-    '"(Dataset|Data Source): Census of Population and Housing, (2016|2021), TableBuilder"\n'
+    '"(Dataset|Data Source|Data source): Census of Population and Housing, (2016|2021), TableBuilder"\n'
     + BLANK_LINE
     + with_prefix('"INFO"', ANY_LINE)
     + BLANK_LINE
