@@ -39,7 +39,7 @@ def named_capture_group(group_match_text: str, group_name: str):
 
 ABS_HEADER_METADATA_PATTERN = (
     "^"
-    + specific_line("Australian Bureau of Statistics")
+    + specific_line("(Australian Bureau of Statistics|TRA Online)")
     + BLANK_LINE
     + ANY_LINE
     + ANY_LINE
@@ -80,3 +80,27 @@ ABS_FOOTER_METADATA_PATTERN = (
     + with_prefix('"Copyright Commonwealth of Australia, ', ANY_LINE)
     + with_prefix('"ABS data licensed under Creative Commons', ANY_LINE)
 )
+
+TRA_FOOTER_METADATA_PATTERN1 = (
+    # specific_line('"Dataset: Census of Population and Housing, 2016, TableBuilder"')
+    '"(Dataset|Data Source|Data source): Tourism Research Australia, National Vistor Survey"\n'
+    + BLANK_LINE
+    + with_prefix('\(c\) Tourism Research Australia', ANY_LINE)
+)
+
+TRA_FOOTER_METADATA_PATTERN2 = (
+    # specific_line('"Dataset: Census of Population and Housing, 2016, TableBuilder"')
+    BLANK_LINE
+    + BLANK_LINE
+    + with_prefix('\(c\) Tourism Research Australia', ANY_LINE)
+)
+
+TRA_FOOTER_METADATA_PATTERN = (
+    TRA_FOOTER_METADATA_PATTERN2
+)
+
+TRA_FOOTER_METADATA_PATTERN = (
+    f"({TRA_FOOTER_METADATA_PATTERN1})|({TRA_FOOTER_METADATA_PATTERN2})"
+)
+
+

@@ -1,3 +1,6 @@
+## Development Version 
+- ENH: preliminary support for TRA NVS data. Doesn't support tall format/ double wafered TRA data.
+
 ## Version 0.2 (October, 2024)
 - BUG: Fix reading footer for newer census metadata
 - ENH: add reader.read_table_to_long_format util to convert raw data to a long format "tidy" dataset

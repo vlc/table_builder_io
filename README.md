@@ -115,6 +115,7 @@ Currently *should* support
 - Wafers: TableBuilderReader.read returns a `Dict[str, pd.DataFrame]` where the keys are the wafer names if wafers 
   are found
 - Currently only intending to support CSV format from Table Builder 
+- **Note, tool depends on the header format of pure table builder CSVs, if you read a CSV in Excel and save it, this will break the tool.** Saving the file will change the cell quoting and add additional commas which make detecting table sizes harder.
   
 
 ## In theory easy to add

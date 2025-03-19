@@ -14,7 +14,7 @@ from table_builder_io.regexes import (
     ABS_FOOTER_METADATA_PATTERN,
     RE_QUOTE_WRAPPED_CSV_SPLITTER,
     RE_QUOTE_WRAPPED_CSV_SPLITTER_AND_CS,
-    WAFER_ROW,
+    WAFER_ROW, TRA_FOOTER_METADATA_PATTERN,
 )
 
 
@@ -23,7 +23,9 @@ class TableBuilderReader:
 
     HEADER_FOOTER_MAX_EXTENT = 20  # maximum candidate size of header / footer, used to limit the search space
     HEADER_PATTERN = re.compile(ABS_HEADER_METADATA_PATTERN)
-    FOOTER_PATTERN = re.compile(ABS_FOOTER_METADATA_PATTERN)
+    # FOOTER_PATTERN = re.compile(f"({ABS_FOOTER_METADATA_PATTERN})|({TRA_FOOTER_METADATA_PATTERN})")
+    FOOTER_PATTERN = re.compile(TRA_FOOTER_METADATA_PATTERN)
+
 
     def __init__(self, line_list: List[str]):
         self.lines = line_list
@@ -193,7 +195,7 @@ def _extract_footer(contents: List[str], footer_maxlines: int, pattern: Union[Pa
     footer_region = "".join(contents[-footer_maxlines:])
     m = re.search(pattern, footer_region)
     if m is None:
-        raise ValueError(f"No match could be found in footer text:\n{footer_region}\n pattern is:\n{pattern}")
+        raise ValueError(f"No match could be found in footer text:\n{footer_region}\n pattern is:\n{pattern=}")
 
     start_index_as_negative_from_end = m.start() - m.end()
     footer = footer_region[m.start() : m.end()].strip("\n")
